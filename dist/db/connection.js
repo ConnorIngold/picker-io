@@ -8,7 +8,7 @@ dotenv_1.default.config();
 const mongoose_1 = __importDefault(require("mongoose"));
 mongoose_1.default.set('strictQuery', true);
 mongoose_1.default
-    .connect(process.env.DB_STRING || '')
-    .then(() => console.log('db connected'))
+    .connect(process.env.MONGODB_URI || '')
+    .then(() => console.log('db connection successful'))
     .catch(err => console.log(err));
 //# sourceMappingURL=connection.js.map

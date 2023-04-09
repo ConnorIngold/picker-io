@@ -9,12 +9,14 @@ const port = parseInt(process.env.PORT || '8081');
 require("@shopify/shopify-api/adapters/node");
 const shopify_api_1 = require("@shopify/shopify-api");
 const express_1 = __importDefault(require("express"));
+require("./db/connection");
+const Shop_model_1 = require("./db/models/Shop.model");
 const shopify = (0, shopify_api_1.shopifyApi)({
     // The next 4 values are typically read from environment variables for added security
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
     apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
     scopes: ['read_products', 'read_orders'],
-    hostName: process.env.DEV_HOSTNAME || '',
+    hostName: process.env.HOSTNAME || '',
     apiVersion: shopify_api_1.LATEST_API_VERSION,
     isEmbeddedApp: true,
 });
@@ -33,10 +35,38 @@ app.use((0, morgan_1.default)('dev'));
 app.use((0, cors_1.default)());
 // app.use('/users', users)
 // app.use('/posts', posts)
-app.get('/', (req, res) => {
-    res.json({
-        message: '🦄🌈✨Hello World! 🌈✨🦄',
-    });
+app.get('/', async (req, res) => {
+    try {
+        const sessionId = await shopify.session.getCurrentId({
+            isOnline: true,
+            rawRequest: req,
+            rawResponse: res,
+        });
+        if (sessionId) {
+            // Check if session exists in the database
+            const shopifySession = await Shop_model_1.ShopifySessionModel.findOne({ id: sessionId });
+            if (shopifySession) {
+                console.log('Session found in database:', shopifySession.toObject());
+                res.json({
+                    message: '🦄🌈✨Hello World! 🌈✨🦄',
+                    sessionId: sessionId,
+                });
+                // You can now use shopifySession.toObject() to make API requests
+            }
+            else {
+                console.log('Session not found in database');
+                // Handle case where session not found in database
+                res.json({
+                    message: '🦄🌈✨Hello World! 🌈✨🦄',
+                    sessionId: 'No sessionId',
+                });
+            }
+        }
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).send('No session found');
+    }
 });
 app.get('/auth', async (req, res) => {
     // The library will automatically redirect the user
@@ -57,17 +87,26 @@ app.get('/auth', async (req, res) => {
     }
 });
 app.get('/auth/callback', async (req, res) => {
-    // The library will automatically set the appropriate HTTP headers
-    const callbackResponse = await shopify.auth.callback({
-        rawRequest: req,
-        rawResponse: res,
-    });
-    // need to save this session to the database
-    // const session = callbackResponse.session
-    console.log('here', callbackResponse.session);
-    // You can now use callback.session to make API requests
-    // await addSessionToStorage(callbackResponse.session.toObject())
-    res.redirect('/index');
+    try {
+        // The library will automatically set the appropriate HTTP headers
+        // including setting the session cookie
+        const callbackResponse = await shopify.auth.callback({
+            rawRequest: req,
+            rawResponse: res,
+        });
+        // Extract the session object from the callback response
+        const session = callbackResponse.session;
+        // Save the session object to the MongoDB database
+        const shopifySession = new Shop_model_1.ShopifySessionModel(session.toObject());
+        await shopifySession.save();
+        // You can now use callback.session to make API requests
+        // await addSessionToStorage(callbackResponse.session.toObject())
+        res.redirect('/index');
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).send('Error occurred while handling callback');
+    }
 });
 app.get('/index', (req, res) => {
     res.send(`
@@ -79,6 +118,6 @@ app.post('/toto', (req, res) => {
     res.send('Hello toto');
 });
 app.listen(port, () => {
-    console.log(`App is listening on port ${port} !`);
+    console.log(`App is listening on port ${port} !`, process.env.ENV);
 });
 //# sourceMappingURL=app.js.map
