@@ -9,5 +9,5 @@
     "strict": true,
 
   },
-  "include": ["src/**/**.ts", "src/types/**/*"],
+  "include": ["src/**/**.**", "src/types/**/*"],
 }

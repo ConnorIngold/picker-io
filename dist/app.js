@@ -9,6 +9,7 @@ const port = parseInt(process.env.PORT || '8081');
 require("@shopify/shopify-api/adapters/node");
 const shopify_api_1 = require("@shopify/shopify-api");
 const express_1 = __importDefault(require("express"));
+const path_1 = __importDefault(require("path"));
 require("./db/connection");
 const Shop_model_1 = require("./db/models/Shop.model");
 const shopify = (0, shopify_api_1.shopifyApi)({
@@ -16,7 +17,7 @@ const shopify = (0, shopify_api_1.shopifyApi)({
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
     apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
     scopes: ['read_products', 'read_orders'],
-    hostName: process.env.HOSTNAME || '',
+    hostName: 'bbad-92-8-111-151.ngrok-free.app' || '',
     apiVersion: shopify_api_1.LATEST_API_VERSION,
     isEmbeddedApp: true,
 });
@@ -35,58 +36,53 @@ app.use((0, morgan_1.default)('dev'));
 app.use((0, cors_1.default)());
 // app.use('/users', users)
 // app.use('/posts', posts)
+app.use(express_1.default.static(path_1.default.join(__dirname, 'client/dist')));
 app.get('/', async (req, res) => {
-    try {
-        const sessionId = await shopify.session.getCurrentId({
-            isOnline: true,
-            rawRequest: req,
-            rawResponse: res,
-        });
-        if (sessionId) {
-            // Check if session exists in the database
-            const shopifySession = await Shop_model_1.ShopifySessionModel.findOne({ id: sessionId });
-            if (shopifySession) {
-                console.log('Session found in database:', shopifySession.toObject());
-                res.json({
-                    message: '🦄🌈✨Hello World! 🌈✨🦄',
-                    sessionId: sessionId,
-                });
-                // You can now use shopifySession.toObject() to make API requests
-            }
-            else {
-                console.log('Session not found in database');
-                // Handle case where session not found in database
-                res.json({
-                    message: '🦄🌈✨Hello World! 🌈✨🦄',
-                    sessionId: 'No sessionId',
+    // The library will automatically redirect the user
+    let shop = req.query.shop;
+    console.log('getCurrentId', req.query);
+    const shopifySession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
+    if (shopifySession) {
+        console.log('Session found in database:', shopifySession.toObject());
+        if (!shopify.config.scopes.equals(shopifySession.scope)) {
+            // Scopes have changed, the app should redirect the merchant to OAuth
+            console.log('Session found in database but scopes have changed');
+            let x = shopify.utils.sanitizeShop(shop, true);
+            if (typeof shop === 'string' && x) {
+                await shopify.auth.begin({
+                    shop: x,
+                    callbackPath: '/auth/callback',
+                    isOnline: false,
+                    rawRequest: req,
+                    rawResponse: res,
                 });
             }
         }
-    }
-    catch (error) {
-        console.error(error);
-        res.status(500).send('No session found');
-    }
-});
-app.get('/auth', async (req, res) => {
-    // The library will automatically redirect the user
-    let shop = req.query.shop;
-    let x = shopify.utils.sanitizeShop(shop, true);
-    if (typeof shop === 'string' && x) {
-        await shopify.auth.begin({
-            shop: x,
-            callbackPath: '/auth/callback',
-            isOnline: false,
-            rawRequest: req,
-            rawResponse: res,
-        });
+        else {
+            res.sendFile(path_1.default.join(__dirname, 'client/dist', 'index.html'));
+        }
     }
     else {
-        // Handle the case where shop is null or an empty string
-        res.status(400).send('Invalid shop parameter or worse...');
+        console.log('Session not found in database');
+        console.log('Shop', shop);
+        let x = shopify.utils.sanitizeShop(shop, true);
+        if (typeof shop === 'string' && x) {
+            await shopify.auth.begin({
+                shop: x,
+                callbackPath: '/callback',
+                isOnline: false,
+                rawRequest: req,
+                rawResponse: res,
+            });
+        }
+        else {
+            // Handle the case where shop is null or an empty string
+            res.status(400).send('Invalid shop parameter');
+        }
     }
 });
-app.get('/auth/callback', async (req, res) => {
+app.get('/callback', async (req, res) => {
+    console.log('callback', req.query);
     try {
         // The library will automatically set the appropriate HTTP headers
         // including setting the session cookie
@@ -96,25 +92,46 @@ app.get('/auth/callback', async (req, res) => {
         });
         // Extract the session object from the callback response
         const session = callbackResponse.session;
+        console.log('session', session);
         // Save the session object to the MongoDB database
         const shopifySession = new Shop_model_1.ShopifySessionModel(session.toObject());
-        await shopifySession.save();
+        await shopifySession
+            .save()
+            .then(() => {
+            console.log('Session saved to database');
+            res.redirect('/');
+        })
+            .catch(err => console.log(err));
         // You can now use callback.session to make API requests
         // await addSessionToStorage(callbackResponse.session.toObject())
-        res.redirect('/index');
     }
     catch (error) {
         console.error(error);
         res.status(500).send('Error occurred while handling callback');
     }
 });
-app.get('/index', (req, res) => {
-    res.send(`
-		<h1>Welcome</h1>
-		<h2>Scroll to learn more</h2>
-	`);
+app.get('/products', async (req, res) => {
+    let shop = req.query.shop;
+    const shopifySession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
+    if (shopifySession) {
+        console.log('Session found in database:', shopifySession.toObject());
+        // ts-disable-next-line
+        try {
+            let mySession = shopifySession.toObject();
+            mySession.isActive = true;
+            const client = new shopify.clients.Rest(mySession);
+            const response = await client.get({
+                path: 'products/8244290257206',
+            });
+            res.json(response);
+        }
+        catch (error) {
+            console.error(error);
+            res.status(500).json(error);
+        }
+    }
 });
-app.post('/toto', (req, res) => {
+app.post('/test', (req, res) => {
     res.send('Hello toto');
 });
 app.listen(port, () => {
