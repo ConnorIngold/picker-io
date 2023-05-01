@@ -22,6 +22,13 @@ const shopify = (0, shopify_api_1.shopifyApi)({
     apiVersion: shopify_api_1.LATEST_API_VERSION,
     isEmbeddedApp: true,
 });
+shopify.webhooks.addHandlers({
+    ORDERS_CREATE: {
+        deliveryMethod: shopify_api_1.DeliveryMethod.PubSub,
+        pubSubProject: 'installer-io',
+        pubSubTopic: 'projects/installer-io/subscriptions/monitor-orders-installer-io-sub',
+    },
+});
 const app = (0, express_1.default)();
 const morgan_1 = __importDefault(require("morgan"));
 // import cors
@@ -94,6 +101,13 @@ app.get('/callback', async (req, res) => {
         // Extract the session object from the callback response
         const session = callbackResponse.session;
         console.log('session', session);
+        // register webhooks
+        const response = await shopify.webhooks.register({
+            session,
+        });
+        if (!response['PRODUCTS_CREATE'][0].success) {
+            console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`);
+        }
         // Save the session object to the MongoDB database
         const shopifySession = new Shop_model_1.ShopifySessionModel(session.toObject());
         await shopifySession
@@ -109,6 +123,22 @@ app.get('/callback', async (req, res) => {
     catch (error) {
         console.error(error);
         res.status(500).send('Error occurred while handling callback');
+    }
+});
+// Process webhooks
+app.post('/webhooks', express_1.default.text({ type: '*/*' }), async (req, res) => {
+    try {
+        // Note: the express.text() given above is an Express middleware that will read
+        // in the body as a string, and make it available at req.body, for this path only.
+        await shopify.webhooks.process({
+            rawBody: req.body,
+            rawRequest: req,
+            rawResponse: res,
+        });
+    }
+    catch (error) {
+        console.log('error in registering webhook');
+        res.status(500).send('Error occurred while registering webhook');
     }
 });
 app.get('/products', async (req, res) => {

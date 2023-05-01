@@ -4,7 +4,7 @@ dotenv.config()
 const port: number = parseInt(process.env.PORT || '8081')
 
 import '@shopify/shopify-api/adapters/node'
-import { shopifyApi, LATEST_API_VERSION, RestClientParams, Session } from '@shopify/shopify-api'
+import { shopifyApi, LATEST_API_VERSION, DeliveryMethod } from '@shopify/shopify-api'
 
 import express, { Application, Request, Response } from 'express'
 import path from 'path'
@@ -21,6 +21,14 @@ const shopify = shopifyApi({
 	hostName: 'bbad-92-8-111-151.ngrok-free.app' || '',
 	apiVersion: LATEST_API_VERSION,
 	isEmbeddedApp: true,
+})
+
+shopify.webhooks.addHandlers({
+	ORDERS_CREATE: {
+		deliveryMethod: DeliveryMethod.PubSub,
+		pubSubProject: 'installer-io',
+		pubSubTopic: 'projects/installer-io/subscriptions/monitor-orders-installer-io-sub',
+	},
 })
 
 const app: Application = express()
@@ -107,6 +115,15 @@ app.get('/callback', async (req, res) => {
 		const session = callbackResponse.session
 		console.log('session', session)
 
+		// register webhooks
+		const response = await shopify.webhooks.register({
+			session,
+		})
+
+		if (!response['PRODUCTS_CREATE'][0].success) {
+			console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`)
+		}
+
 		// Save the session object to the MongoDB database
 		const shopifySession = new ShopifySessionModel(session.toObject())
 		await shopifySession
@@ -122,6 +139,22 @@ app.get('/callback', async (req, res) => {
 	} catch (error) {
 		console.error(error)
 		res.status(500).send('Error occurred while handling callback')
+	}
+})
+
+// Process webhooks
+app.post('/webhooks', express.text({ type: '*/*' }), async (req, res) => {
+	try {
+		// Note: the express.text() given above is an Express middleware that will read
+		// in the body as a string, and make it available at req.body, for this path only.
+		await shopify.webhooks.process({
+			rawBody: req.body, // is a string
+			rawRequest: req,
+			rawResponse: res,
+		})
+	} catch (error) {
+		console.log('error in registering webhook')
+		res.status(500).send('Error occurred while registering webhook')
 	}
 })
 
