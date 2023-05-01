@@ -12,6 +12,7 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 require("./db/connection");
 const Shop_model_1 = require("./db/models/Shop.model");
+const index_1 = require("./middleware/index");
 const shopify = (0, shopify_api_1.shopifyApi)({
     // The next 4 values are typically read from environment variables for added security
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
@@ -41,10 +42,10 @@ app.get('/', async (req, res) => {
     // The library will automatically redirect the user
     let shop = req.query.shop;
     console.log('getCurrentId', req.query);
-    const shopifySession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
-    if (shopifySession) {
-        console.log('Session found in database:', shopifySession.toObject());
-        if (!shopify.config.scopes.equals(shopifySession.scope)) {
+    const shopifyDBSession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
+    if (shopifyDBSession) {
+        console.log('Session found in database:', shopifyDBSession.toObject());
+        if (!shopify.config.scopes.equals(shopifyDBSession.scope)) {
             // Scopes have changed, the app should redirect the merchant to OAuth
             console.log('Session found in database but scopes have changed');
             let x = shopify.utils.sanitizeShop(shop, true);
@@ -111,27 +112,16 @@ app.get('/callback', async (req, res) => {
     }
 });
 app.get('/products', async (req, res) => {
-    let shop = req.query.shop;
-    const shopifySession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
-    if (shopifySession) {
-        console.log('Session found in database:', shopifySession.toObject());
-        // ts-disable-next-line
-        try {
-            let mySession = shopifySession.toObject();
-            mySession.isActive = true;
-            const client = new shopify.clients.Rest(mySession);
-            const response = await client.get({
-                path: 'products/8244290257206',
-            });
-            res.json(response);
-        }
-        catch (error) {
-            console.error(error);
-            res.status(500).json(error);
-        }
+    let session = await (0, index_1.getSessionFromStorage)(req, res);
+    if (session !== undefined) {
+        const client = new shopify.clients.Rest(session);
+        const response = await client.get({
+            path: 'products/8244290257206',
+        });
+        res.json(response);
     }
 });
-app.post('/test', (req, res) => {
+app.get('/test', (req, res) => {
     res.send('Hello toto');
 });
 app.listen(port, () => {

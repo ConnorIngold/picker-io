@@ -4,13 +4,14 @@ dotenv.config()
 const port: number = parseInt(process.env.PORT || '8081')
 
 import '@shopify/shopify-api/adapters/node'
-import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api'
+import { shopifyApi, LATEST_API_VERSION, RestClientParams, Session } from '@shopify/shopify-api'
 
 import express, { Application, Request, Response } from 'express'
 import path from 'path'
 
 import './db/connection'
 import { ShopifySessionModel } from './db/models/Shop.model'
+import { getSessionFromStorage } from './middleware/index'
 
 const shopify = shopifyApi({
 	// The next 4 values are typically read from environment variables for added security
@@ -52,11 +53,11 @@ app.get('/', async (req: Request, res: Response) => {
 	let shop = req.query.shop as string
 	console.log('getCurrentId', req.query)
 
-	const shopifySession = await ShopifySessionModel.findOne({ shop: shop })
-	if (shopifySession) {
-		console.log('Session found in database:', shopifySession.toObject())
+	const shopifyDBSession = await ShopifySessionModel.findOne({ shop: shop })
+	if (shopifyDBSession) {
+		console.log('Session found in database:', shopifyDBSession.toObject())
 
-		if (!shopify.config.scopes.equals(shopifySession.scope)) {
+		if (!shopify.config.scopes.equals(shopifyDBSession.scope)) {
 			// Scopes have changed, the app should redirect the merchant to OAuth
 			console.log('Session found in database but scopes have changed')
 			let x = shopify.utils.sanitizeShop(shop, true)
@@ -133,30 +134,20 @@ app.get('/products', async (req: Request, res: Response) => {
 		}
 	}
 
-	let shop = req.query.shop as string
+	let session = await getSessionFromStorage(req, res)
 
-	const shopifySession = await ShopifySessionModel.findOne({ shop: shop })
-	if (shopifySession) {
-		console.log('Session found in database:', shopifySession.toObject())
-		// ts-disable-next-line
-		try {
-			let mySession = shopifySession.toObject()
-			mySession.isActive = true
-			const client = new shopify.clients.Rest(mySession)
+	if (session !== undefined) {
+		const client = new shopify.clients.Rest(session)
 
-			const response = await client.get<ProductResponse>({
-				path: 'products/8244290257206',
-			})
+		const response = await client.get<ProductResponse>({
+			path: 'products/8244290257206',
+		})
 
-			res.json(response)
-		} catch (error) {
-			console.error(error)
-			res.status(500).json(error)
-		}
+		res.json(response)
 	}
 })
 
-app.post('/test', (req: Request, res: Response) => {
+app.get('/test', (req: Request, res: Response) => {
 	res.send('Hello toto')
 })
 

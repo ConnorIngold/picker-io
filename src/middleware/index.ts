@@ -1,4 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
+import { shopifyApi, RestClientParams, Session, ShopifyRestResources } from '@shopify/shopify-api'
+
+import { ShopifySessionModel } from '../db/models/Shop.model'
 
 const notFound = (req: Request, res: Response, next: NextFunction) => {
 	res.status(404)
@@ -20,4 +23,33 @@ const respondError422 = (res: Response, next: NextFunction) => {
 	next(error)
 }
 
-export { notFound, errorHandler, respondError422 }
+const getSessionFromStorage = async (req: Request, res: Response) => {
+	let shop = req.query.shop as string
+
+	const shopifyDBSession = await ShopifySessionModel.findOne({ shop: shop })
+	if (shopifyDBSession) {
+		console.log('Session found in database:', shopifyDBSession.toObject())
+		try {
+			let mySession = shopifyDBSession.toObject().id
+			console.log('mySession', mySession)
+			// Create a new Session object with the required properties
+			const restClientParams: RestClientParams = {
+				session: {
+					id: shopifyDBSession.id,
+					shop: shopifyDBSession.shop,
+					state: shopifyDBSession.state,
+					isOnline: shopifyDBSession.isOnline,
+					scope: shopifyDBSession.scope,
+					expires: shopifyDBSession.expires,
+					accessToken: shopifyDBSession.accessToken,
+				} as Session,
+			}
+
+			return restClientParams
+		} catch (error) {
+			return
+		}
+	}
+}
+
+export { notFound, errorHandler, respondError422, getSessionFromStorage }
