@@ -25,3 +25,8 @@ model ShopifySession {
   onlineAccessInfoExpiresIn         Int?
   onlineAccessInfoUrl               String?
 }
+
+model Test {
+  id   Int     @id @default(autoincrement())
+  test String?
+}
