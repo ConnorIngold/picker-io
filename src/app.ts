@@ -49,7 +49,7 @@ app.use(morgan('dev'))
 // add cors
 app.use(cors())
 
-app.use(express.static(path.join(__dirname, 'client/dist')))
+app.use(express.static(path.join('client/dist')))
 
 app.get('/', async (req: Request, res: Response) => {
 	// The library will automatically redirect the user
@@ -79,7 +79,7 @@ app.get('/', async (req: Request, res: Response) => {
 				})
 			}
 		} else {
-			res.sendFile(path.join(__dirname, 'client/dist', 'index.html'))
+			res.sendFile(path.join('client/dist', 'index.html'))
 		}
 	} else {
 		console.log('Session not found in database')
