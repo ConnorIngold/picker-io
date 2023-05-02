@@ -123,8 +123,8 @@ app.get('/callback', async (req, res) => {
 			})
 			console.log('🚀 ~ file: app.ts:125 ~ app.get ~ webhookResponse:', webhookResponse)
 
-			if (!webhookResponse['PRODUCTS_CREATE'][0].success) {
-				console.log(`Failed to register PRODUCTS_CREATE webhook: ${webhookResponse['PRODUCTS_CREATE'][0].result}`)
+			if (!webhookResponse['ORDERS_CREATE'][0].success) {
+				console.log(`Failed to register ORDERS_CREATE webhook: ${webhookResponse['ORDERS_CREATE'][0].result}`)
 			}
 		} catch (error) {
 			console.log('🚀 ~ file: app.ts:XXX ~ app.get ~ webhookError:', error)
