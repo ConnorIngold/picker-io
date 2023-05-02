@@ -115,12 +115,13 @@ app.get('/callback', async (req, res) => {
 		})
 		// Extract the session object from the callback response
 		const session = callbackResponse.session
-		console.log('session', session)
+		console.log('🚀 ~ file: app.ts:118 ~ app.get ~ session:', session)
 
 		// register webhooks
 		const response = await shopify.webhooks.register({
 			session,
 		})
+		console.log('🚀 ~ file: app.ts:125 ~ app.get ~ response:', response)
 
 		if (!response['PRODUCTS_CREATE'][0].success) {
 			console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`)
@@ -137,12 +138,13 @@ app.get('/callback', async (req, res) => {
 			console.log('Session saved to database', shopifySession)
 			res.redirect('/')
 		} catch (err) {
-			console.log(err)
+			console.log('🚀 ~ file: app.ts:140 ~ app.get ~ err:', err)
 		}
 		// You can now use callback.session to make API requests
 		// await addSessionToStorage(callbackResponse.session.toObject())
 	} catch (error) {
-		console.error(error)
+		console.log('🚀 ~ file: app.ts:146 ~ app.get ~ error:', error)
+
 		res.status(500).send('Error occurred while handling callback')
 	}
 })
