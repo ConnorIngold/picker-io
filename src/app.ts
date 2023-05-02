@@ -117,14 +117,18 @@ app.get('/callback', async (req, res) => {
 		const session = callbackResponse.session
 		console.log('🚀 ~ file: app.ts:118 ~ app.get ~ session:', session)
 
-		// register webhooks
-		const response = await shopify.webhooks.register({
-			session,
-		})
-		console.log('🚀 ~ file: app.ts:125 ~ app.get ~ response:', response)
+		try {
+			const webhookResponse = await shopify.webhooks.register({
+				session,
+			})
+			console.log('🚀 ~ file: app.ts:125 ~ app.get ~ webhookResponse:', webhookResponse)
 
-		if (!response['PRODUCTS_CREATE'][0].success) {
-			console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`)
+			if (!webhookResponse['PRODUCTS_CREATE'][0].success) {
+				console.log(`Failed to register PRODUCTS_CREATE webhook: ${webhookResponse['PRODUCTS_CREATE'][0].result}`)
+			}
+		} catch (error) {
+			console.log('🚀 ~ file: app.ts:XXX ~ app.get ~ webhookError:', error)
+			res.status(500).send('Error occurred while registering webhooks')
 		}
 
 		// Save the session object to the MongoDB database
