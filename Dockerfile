@@ -12,6 +12,9 @@ RUN npm install
 # Copy the TypeScript source code
 COPY . .
 
+# Copy the compiled client code
+COPY src/client dist/client
+
 # Compile the TypeScript code
 RUN npm run build
 
