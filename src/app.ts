@@ -20,7 +20,7 @@ const shopify = shopifyApi({
 	apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
 	apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
 	scopes: ['read_products', 'read_orders'],
-	hostName: 'bbad-92-8-111-151.ngrok-free.app' || '',
+	hostName: 'picker-io-production.up.railway.app' || '',
 	apiVersion: LATEST_API_VERSION,
 	isEmbeddedApp: true,
 })
