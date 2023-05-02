@@ -1,11 +1,17 @@
-import dotenv from 'dotenv'
-dotenv.config()
+import { PrismaClient } from '@prisma/client'
 
-import mongoose from 'mongoose'
+const prisma = new PrismaClient()
 
-mongoose.set('strictQuery', true)
+const checkDatabaseConnection = async () => {
+	try {
+		await prisma.$connect()
+		console.log('Connected to the database via Prisma!')
+	} catch (error) {
+		console.error('Failed to connect to the database:', error)
+	} finally {
+		await prisma.$disconnect()
+	}
+}
 
-mongoose
-	.connect(process.env.MONGODB_URI || '')
-	.then(() => console.log('db connection successful'))
-	.catch(err => console.log(err))
+// Call the function to check the database connection
+checkDatabaseConnection()

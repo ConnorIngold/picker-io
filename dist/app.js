@@ -11,8 +11,9 @@ const shopify_api_1 = require("@shopify/shopify-api");
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 require("./db/connection");
-const Shop_model_1 = require("./db/models/Shop.model");
+// import { ShopifySessionModel } from './db/models/Shop.model'
 const index_1 = require("./middleware/index");
+const client_1 = require("@prisma/client");
 const shopify = (0, shopify_api_1.shopifyApi)({
     // The next 4 values are typically read from environment variables for added security
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
@@ -46,13 +47,18 @@ app.use((0, cors_1.default)());
 // app.use('/posts', posts)
 app.use(express_1.default.static(path_1.default.join(__dirname, 'client/dist')));
 app.get('/', async (req, res) => {
+    const prisma = new client_1.PrismaClient();
     // The library will automatically redirect the user
     let shop = req.query.shop;
     console.log('getCurrentId', req.query);
-    const shopifyDBSession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
+    const shopifyDBSession = await prisma.shopifySession.findFirst({
+        where: {
+            shop: shop,
+        },
+    });
     if (shopifyDBSession) {
-        console.log('Session found in database:', shopifyDBSession.toObject());
-        if (!shopify.config.scopes.equals(shopifyDBSession.scope)) {
+        console.log('Session found in database:', shopifyDBSession);
+        if (shopifyDBSession.scope && !shopify.config.scopes.equals(shopifyDBSession.scope)) {
             // Scopes have changed, the app should redirect the merchant to OAuth
             console.log('Session found in database but scopes have changed');
             let x = shopify.utils.sanitizeShop(shop, true);
@@ -73,6 +79,7 @@ app.get('/', async (req, res) => {
     else {
         console.log('Session not found in database');
         console.log('Shop', shop);
+        prisma.$disconnect();
         let x = shopify.utils.sanitizeShop(shop, true);
         if (typeof shop === 'string' && x) {
             await shopify.auth.begin({
@@ -108,15 +115,20 @@ app.get('/callback', async (req, res) => {
         if (!response['PRODUCTS_CREATE'][0].success) {
             console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`);
         }
+        const prisma = new client_1.PrismaClient();
         // Save the session object to the MongoDB database
-        const shopifySession = new Shop_model_1.ShopifySessionModel(session.toObject());
-        await shopifySession
-            .save()
-            .then(() => {
-            console.log('Session saved to database');
+        try {
+            const shopifySession = await prisma.shopifySession.create({
+                data: {
+                    ...session,
+                },
+            });
+            console.log('Session saved to database', shopifySession);
             res.redirect('/');
-        })
-            .catch(err => console.log(err));
+        }
+        catch (err) {
+            console.log(err);
+        }
         // You can now use callback.session to make API requests
         // await addSessionToStorage(callbackResponse.session.toObject())
     }

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
-import { shopifyApi, RestClientParams, Session, ShopifyRestResources } from '@shopify/shopify-api'
-
-import { ShopifySessionModel } from '../db/models/Shop.model'
+import { RestClientParams, Session } from '@shopify/shopify-api'
+import { PrismaClient } from '@prisma/client'
+// import { ShopifySessionModel } from '../db/models/Shop.model'
 
 const notFound = (req: Request, res: Response, next: NextFunction) => {
 	res.status(404)
@@ -26,11 +26,17 @@ const respondError422 = (res: Response, next: NextFunction) => {
 const getSessionFromStorage = async (req: Request, res: Response) => {
 	let shop = req.query.shop as string
 
-	const shopifyDBSession = await ShopifySessionModel.findOne({ shop: shop })
+	const prisma = new PrismaClient()
+	const shopifyDBSession = await prisma.shopifySession.findFirst({
+		where: {
+			shop: shop,
+		},
+	})
+
 	if (shopifyDBSession) {
-		console.log('Session found in database:', shopifyDBSession.toObject())
+		console.log('Session found in database:', shopifyDBSession)
 		try {
-			let mySession = shopifyDBSession.toObject().id
+			let mySession = shopifyDBSession.id
 			console.log('mySession', mySession)
 			// Create a new Session object with the required properties
 			const restClientParams: RestClientParams = {

@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSessionFromStorage = exports.respondError422 = exports.errorHandler = exports.notFound = void 0;
-const Shop_model_1 = require("../db/models/Shop.model");
+const client_1 = require("@prisma/client");
+// import { ShopifySessionModel } from '../db/models/Shop.model'
 const notFound = (req, res, next) => {
     res.status(404);
     const error = new Error('Not Found - ' + req.originalUrl);
@@ -24,11 +25,16 @@ const respondError422 = (res, next) => {
 exports.respondError422 = respondError422;
 const getSessionFromStorage = async (req, res) => {
     let shop = req.query.shop;
-    const shopifyDBSession = await Shop_model_1.ShopifySessionModel.findOne({ shop: shop });
+    const prisma = new client_1.PrismaClient();
+    const shopifyDBSession = await prisma.shopifySession.findFirst({
+        where: {
+            shop: shop,
+        },
+    });
     if (shopifyDBSession) {
-        console.log('Session found in database:', shopifyDBSession.toObject());
+        console.log('Session found in database:', shopifyDBSession);
         try {
-            let mySession = shopifyDBSession.toObject().id;
+            let mySession = shopifyDBSession.id;
             console.log('mySession', mySession);
             // Create a new Session object with the required properties
             const restClientParams = {
