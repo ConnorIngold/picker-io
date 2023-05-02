@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
 # Create a directory for the app and set it as the working directory
-WORKDIR /app
+WORKDIR /dist
 
 # Copy the package.json and package-lock.json files
 COPY package*.json .
