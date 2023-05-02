@@ -20,7 +20,7 @@ const shopify = (0, shopify_api_1.shopifyApi)({
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
     apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
     scopes: ['read_products', 'read_orders'],
-    hostName: 'https://picker-io-production.up.railway.app' || '',
+    hostName: 'picker-io-production.up.railway.app' || '',
     apiVersion: shopify_api_1.LATEST_API_VERSION,
     isEmbeddedApp: true,
 });
@@ -102,13 +102,19 @@ app.get('/callback', async (req, res) => {
         });
         // Extract the session object from the callback response
         const session = callbackResponse.session;
-        console.log('session', session);
-        // register webhooks
-        const response = await shopify.webhooks.register({
-            session,
-        });
-        if (!response['PRODUCTS_CREATE'][0].success) {
-            console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`);
+        console.log('🚀 ~ file: app.ts:118 ~ app.get ~ session:', session);
+        try {
+            const webhookResponse = await shopify.webhooks.register({
+                session,
+            });
+            console.log('🚀 ~ file: app.ts:125 ~ app.get ~ webhookResponse:', webhookResponse);
+            if (!webhookResponse['ORDERS_CREATE'][0].success) {
+                console.log(`Failed to register ORDERS_CREATE webhook: ${webhookResponse['ORDERS_CREATE'][0].result}`);
+            }
+        }
+        catch (error) {
+            console.log('🚀 ~ file: app.ts:XXX ~ app.get ~ webhookError:', error);
+            res.status(500).send('Error occurred while registering webhooks');
         }
         // Save the session object to the MongoDB database
         try {
@@ -121,13 +127,13 @@ app.get('/callback', async (req, res) => {
             res.redirect('/');
         }
         catch (err) {
-            console.log(err);
+            console.log('🚀 ~ file: app.ts:140 ~ app.get ~ err:', err);
         }
         // You can now use callback.session to make API requests
         // await addSessionToStorage(callbackResponse.session.toObject())
     }
     catch (error) {
-        console.error(error);
+        console.log('🚀 ~ file: app.ts:146 ~ app.get ~ error:', error);
         res.status(500).send('Error occurred while handling callback');
     }
 });
