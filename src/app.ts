@@ -13,6 +13,7 @@ import './db/connection'
 // import { ShopifySessionModel } from './db/models/Shop.model'
 import { getSessionFromStorage } from './middleware/index'
 import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
 const shopify = shopifyApi({
 	// The next 4 values are typically read from environment variables for added security
@@ -58,8 +59,6 @@ app.use(cors())
 app.use(express.static(path.join(__dirname, 'client/dist')))
 
 app.get('/', async (req: Request, res: Response) => {
-	const prisma = new PrismaClient()
-
 	// The library will automatically redirect the user
 	let shop = req.query.shop as string
 	console.log('getCurrentId', req.query)
@@ -134,7 +133,6 @@ app.get('/callback', async (req, res) => {
 			console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`)
 		}
 
-		const prisma = new PrismaClient()
 		// Save the session object to the MongoDB database
 		try {
 			const shopifySession = await prisma.shopifySession.create({
@@ -196,6 +194,27 @@ app.get('/products', async (req: Request, res: Response) => {
 
 app.get('/test', (req: Request, res: Response) => {
 	res.send('Hello toto')
+})
+
+app.get('/get-user', async (req: Request, res: Response) => {
+	try {
+		const shopifyUser = await prisma.user.findFirst({
+			where: {
+				id: 1,
+			},
+		})
+
+		if (shopifyUser) {
+			console.log('shopifyUser: ', shopifyUser)
+			res.status(200).json(shopifyUser)
+		} else {
+			console.log('User not found')
+			res.status(404).send('User not found')
+		}
+	} catch (error) {
+		console.error('An error occurred: ', error)
+		res.status(500).send('An error occurred')
+	}
 })
 
 app.listen(port, () => {

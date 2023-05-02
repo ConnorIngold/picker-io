@@ -14,6 +14,7 @@ require("./db/connection");
 // import { ShopifySessionModel } from './db/models/Shop.model'
 const index_1 = require("./middleware/index");
 const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
 const shopify = (0, shopify_api_1.shopifyApi)({
     // The next 4 values are typically read from environment variables for added security
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
@@ -47,7 +48,6 @@ app.use((0, cors_1.default)());
 // app.use('/posts', posts)
 app.use(express_1.default.static(path_1.default.join(__dirname, 'client/dist')));
 app.get('/', async (req, res) => {
-    const prisma = new client_1.PrismaClient();
     // The library will automatically redirect the user
     let shop = req.query.shop;
     console.log('getCurrentId', req.query);
@@ -115,7 +115,6 @@ app.get('/callback', async (req, res) => {
         if (!response['PRODUCTS_CREATE'][0].success) {
             console.log(`Failed to register PRODUCTS_CREATE webhook: ${response['PRODUCTS_CREATE'][0].result}`);
         }
-        const prisma = new client_1.PrismaClient();
         // Save the session object to the MongoDB database
         try {
             const shopifySession = await prisma.shopifySession.create({
@@ -165,6 +164,27 @@ app.get('/products', async (req, res) => {
 });
 app.get('/test', (req, res) => {
     res.send('Hello toto');
+});
+app.get('/get-user', async (req, res) => {
+    try {
+        const shopifyUser = await prisma.user.findFirst({
+            where: {
+                id: 1,
+            },
+        });
+        if (shopifyUser) {
+            console.log('shopifyUser: ', shopifyUser);
+            res.status(200).json(shopifyUser);
+        }
+        else {
+            console.log('User not found');
+            res.status(404).send('User not found');
+        }
+    }
+    catch (error) {
+        console.error('An error occurred: ', error);
+        res.status(500).send('An error occurred');
+    }
 });
 app.listen(port, () => {
     console.log(`App is listening on port ${port} !`, process.env.ENV);
