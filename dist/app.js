@@ -35,17 +35,12 @@ const app = (0, express_1.default)();
 const morgan_1 = __importDefault(require("morgan"));
 // import cors
 const cors_1 = __importDefault(require("cors"));
-// routes
-// import users from './api/users.js'
-// import posts from './api/posts.js'
 // json express
 app.use(express_1.default.json());
 // add morgan
 app.use((0, morgan_1.default)('dev'));
 // add cors
 app.use((0, cors_1.default)());
-// app.use('/users', users)
-// app.use('/posts', posts)
 app.use(express_1.default.static(path_1.default.join(__dirname, 'client/dist')));
 app.get('/', async (req, res) => {
     // The library will automatically redirect the user

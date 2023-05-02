@@ -40,10 +40,6 @@ import morgan from 'morgan'
 // import cors
 import cors from 'cors'
 
-// routes
-// import users from './api/users.js'
-// import posts from './api/posts.js'
-
 // json express
 app.use(express.json())
 
@@ -52,9 +48,6 @@ app.use(morgan('dev'))
 
 // add cors
 app.use(cors())
-
-// app.use('/users', users)
-// app.use('/posts', posts)
 
 app.use(express.static(path.join(__dirname, 'client/dist')))
 

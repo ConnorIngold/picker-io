@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "cpx \"src/db/migrations/**/*\" dist/db/migrations",
+    "build": "cpx \"src/db/migrations/**/*\" dist/db/migrations && tsc",
     "build:watch": "tsc --watch",
     "compile": "tsc && node app.js",
     "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/app.js\" \"cpx -w \"src/db/migrations/**/*\" dist/db/migrations",
