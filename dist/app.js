@@ -5,11 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const port = parseInt(process.env.PORT || '8081');
+const serve_static_1 = __importDefault(require("serve-static"));
+const fs_1 = require("fs");
 require("@shopify/shopify-api/adapters/node");
 const shopify_api_1 = require("@shopify/shopify-api");
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
+const port = parseInt(process.env.PORT || '8081');
+const STATIC_PATH = path_1.default.join(__dirname, '..', 'client/dist');
 require("./db/connection");
 // import { ShopifySessionModel } from './db/models/Shop.model'
 const index_1 = require("./middleware/index");
@@ -41,6 +44,7 @@ app.use(express_1.default.json());
 app.use((0, morgan_1.default)('dev'));
 // add cors
 app.use((0, cors_1.default)());
+app.use((0, serve_static_1.default)(STATIC_PATH, { index: false }));
 app.get('/', async (req, res) => {
     // The library will automatically redirect the user
     let shop = req.query.shop;
@@ -67,7 +71,10 @@ app.get('/', async (req, res) => {
             }
         }
         else {
-            res.sendFile(path_1.default.join(__dirname, '..', 'client/dist', 'index.html'));
+            return res
+                .status(200)
+                .set('Content-Type', 'text/html')
+                .send((0, fs_1.readFileSync)(path_1.default.join(STATIC_PATH, 'index.html')));
         }
     }
     else {
@@ -90,7 +97,6 @@ app.get('/', async (req, res) => {
         }
     }
 });
-app.use(express_1.default.static(path_1.default.join(__dirname, '..', 'client/dist')));
 app.get('/frontend', async (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../', 'client/dist', 'index.html'));
 });

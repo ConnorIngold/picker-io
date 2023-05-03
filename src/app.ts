@@ -1,13 +1,17 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-const port: number = parseInt(process.env.PORT || '8081')
+import serveStatic from 'serve-static'
+import { readFileSync } from 'fs'
 
 import '@shopify/shopify-api/adapters/node'
 import { shopifyApi, LATEST_API_VERSION, DeliveryMethod } from '@shopify/shopify-api'
 
 import express, { Application, Request, Response } from 'express'
 import path from 'path'
+
+const port: number = parseInt(process.env.PORT || '8081')
+const STATIC_PATH = path.join(__dirname, '..', 'client/dist')
 
 import './db/connection'
 // import { ShopifySessionModel } from './db/models/Shop.model'
@@ -49,6 +53,8 @@ app.use(morgan('dev'))
 // add cors
 app.use(cors())
 
+app.use(serveStatic(STATIC_PATH, { index: false }))
+
 app.get('/', async (req: Request, res: Response) => {
 	// The library will automatically redirect the user
 	let shop = req.query.shop as string
@@ -77,7 +83,10 @@ app.get('/', async (req: Request, res: Response) => {
 				})
 			}
 		} else {
-			res.sendFile(path.join(__dirname, '..', 'client/dist', 'index.html'))
+			return res
+				.status(200)
+				.set('Content-Type', 'text/html')
+				.send(readFileSync(path.join(STATIC_PATH, 'index.html')))
 		}
 	} else {
 		console.log('Session not found in database')
@@ -100,8 +109,6 @@ app.get('/', async (req: Request, res: Response) => {
 		}
 	}
 })
-
-app.use(express.static(path.join(__dirname, '..', 'client/dist')))
 
 app.get('/frontend', async (req: Request, res: Response) => {
 	res.sendFile(path.join(__dirname, '../', 'client/dist', 'index.html'))
