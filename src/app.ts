@@ -103,6 +103,10 @@ app.get('/', async (req: Request, res: Response) => {
 	}
 })
 
+app.get('/frontend', async (req: Request, res: Response) => {
+	res.sendFile(path.join(__dirname, '../', 'client/dist', 'index.html'))
+})
+
 app.get('/callback', async (req, res) => {
 	console.log('callback', req.query)
 

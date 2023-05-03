@@ -91,6 +91,9 @@ app.get('/', async (req, res) => {
         }
     }
 });
+app.get('/frontend', async (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, '../', 'client/dist', 'index.html'));
+});
 app.get('/callback', async (req, res) => {
     console.log('callback', req.query);
     try {

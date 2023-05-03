@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && cpx \"src/db/migrations/**/*\" dist/db/migrations && prisma generate --schema=./src/db/schema.prisma",
+    "build": "tsc && cpx \"src/db/migrations/**/*\" dist/db/migrations && cpx \"src/client/dist/**/*.*\" dist/db/public && prisma generate --schema=./src/db/schema.prisma",
     "build:watch": "tsc --watch",
+    "build:client": "cd client && npm run build",
     "compile": "tsc && node app.js",
     "dev": "concurrently --kill-others \"tsc -w\" \"nodemon dist/app.js\" \"cpx -w \"src/db/migrations/**/*\" dist/db/migrations",
     "start": "node dist/app.js",
