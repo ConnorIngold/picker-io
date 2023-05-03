@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { Provider } from '@shopify/app-bridge-react'
-const host = 'connor-charle-dev.myshopify.com'
+const host = 'picker-io-production.up.railway.app'
 const apiKey = 'e0f06376ae46ef041a82b7b6f5b96f32'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
