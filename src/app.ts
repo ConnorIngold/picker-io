@@ -26,7 +26,7 @@ const shopify = shopifyApi({
 	apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
 	apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
 	scopes: ['read_products', 'read_orders'],
-	hostName: 'picker-io-production.up.railway.app' || '',
+	hostName: 'picker-io-production.up.railway.app/auth' || '',
 	apiVersion: LATEST_API_VERSION,
 	isEmbeddedApp: true,
 })

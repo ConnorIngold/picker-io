@@ -24,7 +24,7 @@ const shopify = (0, shopify_api_1.shopifyApi)({
     apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
     apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
     scopes: ['read_products', 'read_orders'],
-    hostName: 'picker-io-production.up.railway.app' || '',
+    hostName: 'picker-io-production.up.railway.app/auth' || '',
     apiVersion: shopify_api_1.LATEST_API_VERSION,
     isEmbeddedApp: true,
 });
