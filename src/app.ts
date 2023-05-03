@@ -13,6 +13,8 @@ import path from 'path'
 const port: number = parseInt(process.env.PORT || '8081')
 const STATIC_PATH = path.join(__dirname, '..', 'client/dist')
 
+import helmet from 'helmet'
+
 import './db/connection'
 // import { ShopifySessionModel } from './db/models/Shop.model'
 import { getSessionFromStorage } from './middleware/index'
@@ -53,9 +55,14 @@ app.use(morgan('dev'))
 // add cors
 app.use(cors())
 
-app.use(serveStatic(STATIC_PATH, { index: false }))
-
 app.get('/', async (req: Request, res: Response) => {
+	res
+		.status(200)
+		.set('Content-Type', 'text/html')
+		.send(readFileSync(path.join(STATIC_PATH, 'index.html')))
+})
+
+app.get('/auth', async (req: Request, res: Response) => {
 	// The library will automatically redirect the user
 	let shop = req.query.shop as string
 	console.log('getCurrentId', req.query)
@@ -83,10 +90,7 @@ app.get('/', async (req: Request, res: Response) => {
 				})
 			}
 		} else {
-			return res
-				.status(200)
-				.set('Content-Type', 'text/html')
-				.send(readFileSync(path.join(STATIC_PATH, 'index.html')))
+			return res.redirect('/')
 		}
 	} else {
 		console.log('Session not found in database')
@@ -110,11 +114,7 @@ app.get('/', async (req: Request, res: Response) => {
 	}
 })
 
-app.get('/frontend', async (req: Request, res: Response) => {
-	res.sendFile(path.join(__dirname, '../', 'client/dist', 'index.html'))
-})
-
-app.get('/callback', async (req, res) => {
+app.get('/auth/callback', async (req, res) => {
 	console.log('callback', req.query)
 
 	try {
@@ -226,6 +226,9 @@ app.get('/get-user', async (req: Request, res: Response) => {
 		res.status(500).send('An error occurred')
 	}
 })
+
+app.use(helmet())
+app.use(serveStatic(STATIC_PATH, { index: false }))
 
 app.listen(port, () => {
 	console.log(`App is listening on port ${port} !`, process.env.ENV)

@@ -13,6 +13,7 @@ const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const port = parseInt(process.env.PORT || '8081');
 const STATIC_PATH = path_1.default.join(__dirname, '..', 'client/dist');
+const helmet_1 = __importDefault(require("helmet"));
 require("./db/connection");
 // import { ShopifySessionModel } from './db/models/Shop.model'
 const index_1 = require("./middleware/index");
@@ -44,8 +45,13 @@ app.use(express_1.default.json());
 app.use((0, morgan_1.default)('dev'));
 // add cors
 app.use((0, cors_1.default)());
-app.use((0, serve_static_1.default)(STATIC_PATH, { index: false }));
 app.get('/', async (req, res) => {
+    res
+        .status(200)
+        .set('Content-Type', 'text/html')
+        .send((0, fs_1.readFileSync)(path_1.default.join(STATIC_PATH, 'index.html')));
+});
+app.get('/auth', async (req, res) => {
     // The library will automatically redirect the user
     let shop = req.query.shop;
     console.log('getCurrentId', req.query);
@@ -71,10 +77,7 @@ app.get('/', async (req, res) => {
             }
         }
         else {
-            return res
-                .status(200)
-                .set('Content-Type', 'text/html')
-                .send((0, fs_1.readFileSync)(path_1.default.join(STATIC_PATH, 'index.html')));
+            return res.redirect('/');
         }
     }
     else {
@@ -97,10 +100,7 @@ app.get('/', async (req, res) => {
         }
     }
 });
-app.get('/frontend', async (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, '../', 'client/dist', 'index.html'));
-});
-app.get('/callback', async (req, res) => {
+app.get('/auth/callback', async (req, res) => {
     console.log('callback', req.query);
     try {
         // The library will automatically set the appropriate HTTP headers
@@ -196,6 +196,8 @@ app.get('/get-user', async (req, res) => {
         res.status(500).send('An error occurred');
     }
 });
+app.use((0, helmet_1.default)());
+app.use((0, serve_static_1.default)(STATIC_PATH, { index: false }));
 app.listen(port, () => {
     console.log(`App is listening on port ${port} !`, process.env.ENV);
 });
