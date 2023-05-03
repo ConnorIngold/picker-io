@@ -26,7 +26,7 @@ const shopify = shopifyApi({
 	apiKey: process.env.SHOPIFY_API_KEY || 'APIKeyFromPartnersDashboard',
 	apiSecretKey: process.env.SHOPIFY_API_SECRET || 'APISecretKeyFromPartnersDashboard',
 	scopes: ['read_products', 'read_orders'],
-	hostName: 'picker-io-production.up.railway.app/auth' || '',
+	hostName: 'picker-io-production.up.railway.app' || '',
 	apiVersion: LATEST_API_VERSION,
 	isEmbeddedApp: true,
 })
@@ -102,7 +102,7 @@ app.get('/auth', async (req: Request, res: Response) => {
 		if (typeof shop === 'string' && x) {
 			await shopify.auth.begin({
 				shop: x,
-				callbackPath: '/callback',
+				callbackPath: '/auth/callback',
 				isOnline: false,
 				rawRequest: req,
 				rawResponse: res,
