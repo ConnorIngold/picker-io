@@ -26,7 +26,7 @@ const shopify = (0, shopify_api_1.shopifyApi)({
     scopes: ['read_products', 'read_orders'],
     hostName: 'picker-io-production.up.railway.app' || '',
     apiVersion: shopify_api_1.LATEST_API_VERSION,
-    isEmbeddedApp: true,
+    isEmbeddedApp: false,
 });
 shopify.webhooks.addHandlers({
     ORDERS_CREATE: {

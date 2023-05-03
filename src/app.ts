@@ -28,7 +28,7 @@ const shopify = shopifyApi({
 	scopes: ['read_products', 'read_orders'],
 	hostName: 'picker-io-production.up.railway.app' || '',
 	apiVersion: LATEST_API_VERSION,
-	isEmbeddedApp: true,
+	isEmbeddedApp: false,
 })
 
 shopify.webhooks.addHandlers({
