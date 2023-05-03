@@ -49,8 +49,6 @@ app.use(morgan('dev'))
 // add cors
 app.use(cors())
 
-app.use(express.static(path.join(__dirname, '..', 'client/dist')))
-
 app.get('/', async (req: Request, res: Response) => {
 	// The library will automatically redirect the user
 	let shop = req.query.shop as string
