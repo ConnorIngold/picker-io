@@ -11,8 +11,10 @@
   "dependencies": {
     "@shopify/app-bridge": "^3.7.6",
     "@shopify/app-bridge-react": "^3.7.6",
+    "@shopify/polaris": "^10.49.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.11.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.28",
