@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react'
 import ReactDOM from 'react-dom/client'
-import { Buffer } from 'buffer'
 import { AppProvider } from '@shopify/polaris'
 import { Provider } from '@shopify/app-bridge-react'
 
@@ -36,7 +35,7 @@ function AppBridgeLink({ url, children, external, ...rest }: any): JSX.Element {
 
 const config = {
 	apiKey: 'e0f06376ae46ef041a82b7b6f5b96f32',
-	host: btoa('connor-charle-dev.myshopify.com/admin'),
+	host: btoa('connor-charle-dev.myshopify.com'),
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
